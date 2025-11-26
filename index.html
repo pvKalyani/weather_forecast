@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta-name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather App (No API Key)</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef2ff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: #ffffff;
+      padding: 20px;
+      width: 350px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0px 4px 20px rgba(0,0,0,0.1);
+    }
+    input {
+      width: 90%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #1e3a8a;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .weather-box {
+      margin-top: 20px;
+      display: none;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>Weather Forecast</h2>
+    <input type="text" id="city" placeholder="Enter city (e.g., Hyderabad)" />
+    <button onclick="getWeather()">Get Weather</button>
+
+    <div id="error" class="error">City not found!</div>
+
+    <div id="weatherBox" class="weather-box">
+      <h3 id="cityName"></h3>
+      <h1 id="temperature"></h1>
+      <p id="description"></p>
+      <p>Wind: <span id="wind"></span> km/h</p>
+    </div>
+  </div>
+
+  <script>
+    async function getWeather() {
+      const city = document.getElementById("city").value.trim();
+      if (!city) return alert("Enter city name");
+
+      document.getElementById("error").style.display = "none";
+
+      try {
+        // STEP 1 — Get latitude + longitude
+        const geo = await fetch(
+          `https://geocoding-api.open-meteo.com/v1/search?name=${city}`
+        );
+        const geoData = await geo.json();
+
+        if (!geoData.results || geoData.results.length === 0) {
+          document.getElementById("error").style.display = "block";
+          document.getElementById("weatherBox").style.display = "none";
+          return;
+        }
+
+        const place = geoData.results[0];
+        const lat = place.latitude;
+        const lon = place.longitude;
+
+        // STEP 2 — Get weather data
+        const weather = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`
+        );
+        const data = await weather.json();
+
+        const w = data.current_weather;
+
+        document.getElementById("cityName").innerHTML =
+          `${place.name}, ${place.country}`;
+        document.getElementById("temperature").innerHTML = w.temperature + "°C";
+        document.getElementById("description").innerHTML =
+          "Weather Code: " + w.weathercode;
+        document.getElementById("wind").innerHTML = w.windspeed;
+
+        document.getElementById("weatherBox").style.display = "block";
+      } catch (err) {
+        document.getElementById("error").style.display = "block";
+        document.getElementById("weatherBox").style.display = "none";
+      }
+    }
+  </script>
+</body>
+</html>
